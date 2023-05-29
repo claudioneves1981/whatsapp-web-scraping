@@ -42,13 +42,13 @@ def get_messages(driver, contact_list):
     global SCROLL_SIZE
     print('>>> getting messages')
     conversations = []
-    new_contact_list = set()
+    print(contact_list)
+    
+    
     for contact in contact_list:
-        if "+55" not in contact:
-            new_contact_list.add(contact)
-    
-    
-    for contact in new_contact_list:
+        
+        
+        
     	    
         sleep(10)
         user = driver.find_element(By.XPATH,'//span[contains(@title, "{}")]'.format(contact))
@@ -62,7 +62,7 @@ def get_messages(driver, contact_list):
         while True:
             elements = driver.find_elements(By.CLASS_NAME,"copyable-text")
             for e in elements:
-                if "+55" not in e.text:
+                if "+" not in e.text:
                     print(e.text)
                     messages.add(e.text)
             if length == len(messages):
@@ -86,6 +86,8 @@ def main():
     SCROLL_SIZE = 600
     SCROLL_TO = 600
     conversations = []
+    total_conversations = 0
+    total_contacts = 0
 
     options = Options()
     options.add_argument('user-data-dir=./User_Data')  # saving user data so you don't have to scan the QR Code again
@@ -105,10 +107,13 @@ def main():
             conversations.extend(get_messages(driver, list(contacts_sel-contacts)))
             contacts.update(contacts_sel)
             if length == len(contacts) and length != 0:
+                print(len(contacts))
                 break
             else:
                 length = len(contacts)
             pane_scroll(driver)
+        total_contacts = len(contacts)
+        total_conversations = len(conversations)
         print(len(contacts), "contacts retrieved")
         print(len(conversations), "conversations retrieved")
         filename = 'collected_data/all.json'
@@ -117,8 +122,10 @@ def main():
             pickle.dump(conversations, fp)
     except Exception as e:
     	#pass
+        #print("list of contacts retrieved in folder /collected_data/conversations")
+        print("list of conversations retrieved in folder /collected_data/conversations")
         print(e)
-        #driver.quit()
+        driver.quit()
 
 
 if __name__ == "__main__":
