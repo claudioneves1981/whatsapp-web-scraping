@@ -2,7 +2,10 @@ import os
 import pickle
 
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from webdriver_manager.chrome import ChromeDriverManager
 from time import sleep
 
 # you can set the chromedriver path on the system path and remove this variable
@@ -16,11 +19,11 @@ def send_a_message(driver):
     msg = input('Enter your message')
 
     # saving the defined contact name from your WhatsApp chat in user variable
-    user = driver.find_element_by_xpath('//span[@title = "{}"]'.format(name))
+    user = driver.find_element('xpath','//span[@title = "{}"]'.format(name))
     user.click()
 
     # name of span class of contatct
-    msg_box = driver.find_element_by_class_name('_3uMse')
+    msg_box = driver.find_element(By.CLASS_NAME ,'_3Uu1_')
     msg_box.send_keys(msg)
     sleep(5)
 
@@ -29,8 +32,8 @@ def pane_scroll(dr):
     global SCROLL_TO, SCROLL_SIZE
 
     print('>>> scrolling side pane')
-    side_pane = dr.find_element_by_id('pane-side')
-    dr.execute_script('arguments[0].scrollTop = '+str(SCROLL_TO), side_pane)
+    side_pane = dr.find_element('id','pane-side')
+    dr.execute_script('arguments[0].scrollTop ={} '.format(SCROLL_TO), side_pane)
     sleep(3)
     SCROLL_TO += SCROLL_SIZE
 
@@ -39,26 +42,35 @@ def get_messages(driver, contact_list):
     global SCROLL_SIZE
     print('>>> getting messages')
     conversations = []
+    new_contact_list = set()
     for contact in contact_list:
-
-        sleep(2)
-        user = driver.find_element_by_xpath('//span[contains(@title, "{}")]'.format(contact))
+        if "+55" not in contact:
+            new_contact_list.add(contact)
+    
+    
+    for contact in new_contact_list:
+    	    
+        sleep(10)
+        user = driver.find_element(By.XPATH,'//span[contains(@title, "{}")]'.format(contact))
         user.click()
-        sleep(3)
-        conversation_pane = driver.find_element_by_xpath("//div[@class='_2-aNW']")
-
+        sleep(10)	
+        conversation_pane = driver.find_element(By.XPATH, '//div[@class = "_2Ts6i _2xAQV"]')
+    	
         messages = set()
         length = 0
         scroll = SCROLL_SIZE
         while True:
-            elements = driver.find_elements_by_xpath("//div[@class='copyable-text']")
+            elements = driver.find_elements(By.CLASS_NAME,"copyable-text")
             for e in elements:
-                messages.add(e.get_attribute('data-pre-plain-text') + e.text)
+                if "+55" not in e.text:
+                    print(e.text)
+                    messages.add(e.text)
             if length == len(messages):
                 break
             else:
                 length = len(messages)
-            driver.execute_script('arguments[0].scrollTop = -' + str(scroll), conversation_pane)
+                
+            driver.execute_script('arguments[0].scrollTop = -{}'.format(scroll), conversation_pane)
             sleep(2)
             scroll += SCROLL_SIZE
         conversations.append(messages)
@@ -77,7 +89,8 @@ def main():
 
     options = Options()
     options.add_argument('user-data-dir=./User_Data')  # saving user data so you don't have to scan the QR Code again
-    driver = webdriver.Chrome(executable_path=CHROMEDRIVER_PATH, chrome_options=options)
+    #driver = webdriver.Chrome(executable_path=CHROMEDRIVER_PATH, chrome_options=options)
+    driver = webdriver.Chrome('/usr/lib/chromium-browser/chromedriver')
     driver.get('https://web.whatsapp.com/')
     input('Press enter after scanning QR code or after the page has fully loaded\n')
 
@@ -87,7 +100,7 @@ def main():
         contacts = set()
         length = 0
         while True:
-            contacts_sel = driver.find_elements_by_class_name('_357i8')  # get just contacts ignoring groups
+            contacts_sel = driver.find_elements(By.CLASS_NAME, "_21S-L") 
             contacts_sel = set([j.text for j in contacts_sel])
             conversations.extend(get_messages(driver, list(contacts_sel-contacts)))
             contacts.update(contacts_sel)
@@ -103,8 +116,9 @@ def main():
         with open(filename, 'wb') as fp:
             pickle.dump(conversations, fp)
     except Exception as e:
+    	#pass
         print(e)
-        driver.quit()
+        #driver.quit()
 
 
 if __name__ == "__main__":
