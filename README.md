@@ -9,6 +9,4 @@ Just a simple WhatsApp web scraping to collect conversation data.
  - Wait for the program to run and enjoy the collected data in console, files saved in /collected_data folder created during script execution^^
  
 ## Know troubles:
-It may happen that the WhatsApp changes the name of the CSS classes it uses, if it occurs, the program won't be able to get the contact list, scroll the side-pane, or get the messages. To solve this, you must search for the current CSS class name and change it in the code.
-
-In same groups may occurs errors, I did not identify the cause , I hope that same collaborator can identify and help me correct the error. 
+It may happen that the WhatsApp changes the name of the CSS classes it uses, if it occurs, the program won't be able to get the contact list, scroll the side-pane, or get the messages. To solve this, you must search for the current CSS class name and change it in the code. 

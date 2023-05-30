@@ -4,12 +4,15 @@ import pickle
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import TimeoutException
 from webdriver_manager.chrome import ChromeDriverManager
 from time import sleep
 
 # you can set the chromedriver path on the system path and remove this variable
-CHROMEDRIVER_PATH = 'utils/chromedriver.exe'
+CHROMEDRIVER_PATH = '/usr/lib/chromium-browser/chromedriver'
 global SCROLL_TO, SCROLL_SIZE
 
 
@@ -42,17 +45,14 @@ def get_messages(driver, contact_list):
     global SCROLL_SIZE
     print('>>> getting messages')
     conversations = []
-    print(contact_list)
-    
-    
+        
     for contact in contact_list:
         
-        
-        
-    	    
-        sleep(10)
-        user = driver.find_element(By.XPATH,'//span[contains(@title, "{}")]'.format(contact))
-        user.click()
+        try:
+        	WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH,'//span[contains(@title, "{}")]'.format(contact)))).click()
+        except TimeoutException:
+        	print("Timed Out. \n>>> processing next contact...")
+        	
         sleep(10)	
         conversation_pane = driver.find_element(By.XPATH, '//div[@class = "_2Ts6i _2xAQV"]')
     	
@@ -63,13 +63,11 @@ def get_messages(driver, contact_list):
             elements = driver.find_elements(By.CLASS_NAME,"copyable-text")
             for e in elements:
                 if "+" not in e.text:
-                    print(e.text)
                     messages.add(e.text)
             if length == len(messages):
                 break
             else:
                 length = len(messages)
-                
             driver.execute_script('arguments[0].scrollTop = -{}'.format(scroll), conversation_pane)
             sleep(2)
             scroll += SCROLL_SIZE
@@ -86,13 +84,10 @@ def main():
     SCROLL_SIZE = 600
     SCROLL_TO = 600
     conversations = []
-    total_conversations = 0
-    total_contacts = 0
 
     options = Options()
     options.add_argument('user-data-dir=./User_Data')  # saving user data so you don't have to scan the QR Code again
-    #driver = webdriver.Chrome(executable_path=CHROMEDRIVER_PATH, chrome_options=options)
-    driver = webdriver.Chrome('/usr/lib/chromium-browser/chromedriver')
+    driver = webdriver.Chrome(CHROMEDRIVER_PATH)
     driver.get('https://web.whatsapp.com/')
     input('Press enter after scanning QR code or after the page has fully loaded\n')
 
@@ -107,13 +102,11 @@ def main():
             conversations.extend(get_messages(driver, list(contacts_sel-contacts)))
             contacts.update(contacts_sel)
             if length == len(contacts) and length != 0:
-                print(len(contacts))
                 break
             else:
                 length = len(contacts)
+                print(length, " contacts processed... \n>>> retrieving messages")
             pane_scroll(driver)
-        total_contacts = len(contacts)
-        total_conversations = len(conversations)
         print(len(contacts), "contacts retrieved")
         print(len(conversations), "conversations retrieved")
         filename = 'collected_data/all.json'
@@ -121,9 +114,6 @@ def main():
         with open(filename, 'wb') as fp:
             pickle.dump(conversations, fp)
     except Exception as e:
-    	#pass
-        #print("list of contacts retrieved in folder /collected_data/conversations")
-        print("list of conversations retrieved in folder /collected_data/conversations")
         print(e)
         driver.quit()
 
